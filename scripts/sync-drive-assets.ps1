@@ -24,10 +24,11 @@ foreach ($folder in $sources.folders) {
 
   $before = @(Get-ChildItem -Path $target -Recurse -File -ErrorAction SilentlyContinue)
 
-  try {
-    gdown --folder $folder.drive_url --output $target --remaining-ok --continue
-  } catch {
-    Write-Warning "gdown failed for $($folder.title): $($_.Exception.Message)"
+  $exitCode = 0
+  & gdown --folder $folder.drive_url --output $target --continue
+  $exitCode = $LASTEXITCODE
+  if ($exitCode -ne 0) {
+    Write-Warning "gdown returned exit code $exitCode for $($folder.title). Continuing with any files that were downloaded."
   }
 
   $removed = @()
