@@ -24,12 +24,12 @@ foreach ($folder in $sources.folders) {
 
   $before = @(Get-ChildItem -Path $target -Recurse -File -ErrorAction SilentlyContinue)
 
-  $exitCode = 0
   & gdown --folder $folder.drive_url --output $target --continue
   $exitCode = $LASTEXITCODE
   if ($exitCode -ne 0) {
     Write-Warning "gdown returned exit code $exitCode for $($folder.title). Continuing with any files that were downloaded."
   }
+  $global:LASTEXITCODE = 0
 
   $removed = @()
   Get-ChildItem -Path $target -Recurse -File -ErrorAction SilentlyContinue | ForEach-Object {
@@ -76,7 +76,9 @@ foreach ($entry in $report) {
   $lines += "| $($entry.title) | $($entry.files_after) | $($entry.source) |"
 }
 $lines += ""
-$lines += "Files above 95 MB are skipped to stay below GitHub's hard file-size limit."
+$lines += "Files above 95 MB are skipped to stay below GitHub's hard file-size limit. Some Google Drive folders may only sync partially if nested files are not publicly downloadable."
 $lines | Set-Content -Path (Join-Path $repoRoot "sync-report.md") -Encoding UTF8
 
 Write-Host "Synced $($index.Count) files into assets/."
+$global:LASTEXITCODE = 0
+exit 0
