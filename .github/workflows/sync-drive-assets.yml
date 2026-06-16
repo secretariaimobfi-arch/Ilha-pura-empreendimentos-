@@ -1,0 +1,47 @@
+name: Sync Drive assets
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - sources.json
+      - .github/workflows/sync-drive-assets.yml
+      - scripts/sync-drive-assets.ps1
+      - sync-request.txt
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Install downloader
+        run: python -m pip install --upgrade gdown
+
+      - name: Sync Google Drive folders
+        shell: pwsh
+        run: ./scripts/sync-drive-assets.ps1
+
+      - name: Commit synced assets
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add assets asset-index.json sync-report.md
+          if git diff --cached --quiet; then
+            echo "No asset changes to commit."
+          else
+            git commit -m "Sync Drive assets into repository"
+            git push
+          fi
